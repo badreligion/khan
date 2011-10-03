@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+	<head>
+		<title>{% block page_title %}PAGE TITLE{% endblock %}</title>
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/reset.css" type="text/css" />
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/typography.css" type="text/css" />
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/base.css" type="text/css" />
+		{% block page_head %}{% endblock %}
+	</head>
+	<body>
+		<div class="container">
+			<div id="hd">
+				<h1>Yet Another Chat App</h1>
+			</div>
+			<div id="bd">
+				{% block page_content %}PAGE CONTENT{% endblock %}
+			</div>
+			<div id="ft">
+				footer
+			</div>
+		</div>
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.6.2.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/socket.io.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/pages/common.js"></script>
+{% block page_bottom %}{% endblock %}
+	</body>
+</html>

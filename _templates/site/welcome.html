@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block page_bottom %}
+<script type="text/javascript">
+$(document).ready(function(){
+	Chas.set_user_properties({session_key:'{{request.session.session_key}}',username:'{{request.user.username}}',email:'{{request.user.email }}'});
+});
+</script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jqui/jquery.ui.core.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jqui/jquery.ui.widget.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jqui/jquery.ui.tabs.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/pages/welcome.js"></script>
+{% endblock %}
+
+
+{% block page_head %}
+<link rel="stylesheet" href="{{ STATIC_URL }}css/jqui/jquery.ui.core.css" type="text/css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/jqui/jquery.ui.tabs.css" type="text/css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/jqui/jquery.ui.theme.css" type="text/css" />
+{% endblock %}
+
+
+{% block page_content %}
+
+<div class="bd_left">
+	<div id="id_channels_list" class="left_block ui-corner-top">
+		<h3>Channels</h3>
+	</div>
+	<div id="id_users_list" class="left_block ui-corner-bottom">
+		<h3>Users Online</h3>
+	</div>	
+</div>
+
+<div class="bd_center">
+	<div id="tabs"><ul></ul></div>
+		
+</div>
+
+
+
+<div class="clear"></div>
+{% endblock %}
+

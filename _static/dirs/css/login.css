@@ -1,0 +1,17 @@
+#id_login_form{
+	border:1px solid #c0c0c0;
+	width:210px;
+	margin:0 auto;
+	padding:10px;
+}
+input[type=text], input[type=password]{
+	border:1px solid #d0d0d0;
+	font-size:12px;
+	width:180px;
+}
+.login_row{
+	padding:2px 0;
+}
+.error_message{
+	color:red;
+}

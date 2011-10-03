@@ -1,0 +1,76 @@
+body{
+	background:#ffffff;
+	color:#333333;
+}
+.container{
+	margin: 0px auto;
+	width:100%;
+}
+#hd,#bd,#ft{
+	padding:10px;
+}
+#hd{
+	margin-bottom:5px;
+}
+#bd{
+	min-height:400px;
+}
+#ft{
+	background:#c0c0c0;
+	height:50px;
+}
+
+#hd h1{
+	color:#808080;
+}
+
+h3{
+	color: #ababab;
+}
+
+.bd_left, .bd_center{
+	float:left;
+	padding:4px;
+}
+
+.bd_left{
+	width:200px;
+}
+
+.bd_center{
+	width:600px;
+	margin-left:10px;
+}
+
+.left_block{
+	border:1px solid #c0c0c0;
+	padding:4px;
+	float:left;
+	width:200px;
+	margin-top:4px;
+}
+
+.message_container{
+	height:400px;
+	border:1px solid #c0c0c0;
+	padding:6px;
+	overflow:auto;
+}
+
+/*.channel_container .channel_text{*/
+.message_text{
+	display:block;
+	width:98%;
+	margin:10px auto;
+	font-size:14px;
+	border:1px solid #c0c0c0;
+	padding:6px;
+	color:#808080;
+}
+
+.clear{
+	clear:both;
+}
+
+#tabs{ margin:4px;}
+#tabs li .ui-icon-close { float: left; margin: 0.4em 0.2em 0 0; cursor: pointer; }

@@ -1,0 +1,55 @@
+{% load url from future %}
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+	<head>
+		<title>{% block page_title %}PAGE TITLE{% endblock %}</title>
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/reset.css" type="text/css" />
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/typography.css" type="text/css" />
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/jqui/jquery.ui.core.css" type="text/css" />
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/jqui/jquery.ui.theme.css" type="text/css" />
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/jqui/jquery.ui.button.css" type="text/css" />
+		<link rel="stylesheet" href="{{ STATIC_URL }}css/login.css" type="text/css" />
+	</head>
+	<body>
+		<div class="container">
+			
+			<div id="bd">
+				
+				<p>&nbsp;</p>
+				<p>&nbsp;</p>
+				<p>&nbsp;</p>
+				<p>&nbsp;</p>
+				<p>&nbsp;</p>
+				
+				<div id="id_login_form" class="ui-corner-all">
+					<form action="{% url 'django.contrib.auth.views.login' %}" method="post" name="frm_login">
+						{% csrf_token %}
+						<div class="login_row"><label for="id_username">Email</label></div>
+						<div class="login_row">{{ form.username }}</div>
+						<div class="login_row"><label for="id_password">Password</label></div>
+						<div class="login_row">{{ form.password }}</div>
+						<div class="login_row"><input type="submit" name="login_submit" id="id_login_submit" value="login" /></div>
+						{% if form.errors %}
+						<div class="error_message">Your username and password didn't match. Please try again.</div>
+						{% endif %}
+						<input type="hidden" name="next" value="{{ next }}" />
+					</form>
+				</div>				
+			</div>
+
+		</div>
+		
+		<script type="text/javascript" src={{ STATIC_URL }}js/jquery-1.6.2.js></script>
+		<script type="text/javascript" src={{ STATIC_URL }}js/jqui/jquery.ui.core.min.js></script>
+		<script type="text/javascript" src={{ STATIC_URL }}js/jqui/jquery.ui.widget.min.js></script>
+		<script type="text/javascript" src={{ STATIC_URL }}js/jqui/jquery.ui.button.min.js></script>
+		<script>
+		$(document).ready(function(){
+			$('#id_login_submit').button();
+		});
+		</script>
+	</body>
+</html>
+
