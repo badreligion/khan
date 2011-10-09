@@ -1,0 +1,35 @@
+=============================================================================================
+2011-10-09 
+change message structure to serve not just text base message.
+each time user open new channel tab, browser needs to create new socket listener
+a listener to serve text base only considered wasting and creating another sockets to serve non text message is just too expensive.
+message structure change from:
+{
+	'message': $text_message,
+	'channel': {
+		id: $channel_id
+	},
+	'sender': $username
+}
+to:
+{
+	meta: {
+		type: $message_type [message,join,typing,leave]
+	},
+	channel:{
+		id: $channel_id
+	},
+	text: $string_text,
+	sender: $username,
+}
+
+implements user online on channels, tab click, and channel click
+join channel already works, but leave channel probably not
+
+redis data
+there are 3 keys
+user has 2 keys, 
+1. user data itself, key with prefix 'Session.${django session id}', (redis hash type)
+2. channel that a user has join, key with prefix 'User.Join.${django session id}',  (redis set type)
+channel has 1 key, contains list of user id, key with prefix 'Channel.Users.${channel id}' (redis set type)
+
