@@ -7,8 +7,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.utils import simplejson
 
-from redis import Redis
-
+from khan.utils.redis_helper import get_redis
+from khan.site import redisk
 
 def front_page(request):
 	if request.user.is_authenticated():
@@ -20,30 +20,18 @@ def front_page(request):
 @login_required
 @require_http_methods(["POST"])
 def init_pipe(request):
-	redisdb = Redis(host='localhost',port=6379)
-	if not redisdb.exists(request.session.session_key):
+	redisdb = get_redis()
+	redis_session_key = redisk.get_session_key(request.session.session_key)
+	if not redisdb.exists(redis_session_key):
 		user = {
 			'username':request.user.username,
-			'email':request.user.email
+			'email':request.user.email,
+			'pk':request.user.pk
 		}
-		if not redisdb.hmset(request.session.session_key,user):
+		if not redisdb.hmset(redis_session_key,user):
 			print 'cant save to redis'
 			return HttpResponseServerError('cant save to redis')
 	return HttpResponse('ok')
 
 
-
-@login_required
-def online_users_json(request):
-	redisdb = Redis(host='localhost',port=6379)
-	keys = redisdb.keys('*')
 	
-	users = []
-	for key in keys:
-		users.append(redisdb.hgetall(key))
-	
-	print users
-	
-	json = simplejson.dumps(users)
-	return HttpResponse(json, mimetype='application/json')
-

@@ -158,8 +158,6 @@ TEMPLATE_CONTEXT_PROCESSORS = ("django.contrib.auth.context_processors.auth",
 								"django.contrib.messages.context_processors.messages",
 								"django.core.context_processors.request")
 
-
-
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/login'
 LOGOUT_URL = '/logout'
@@ -168,3 +166,7 @@ AUTHENTICATION_BACKENDS = (
 		'khan.site.backends.EmailModelBackend',
 #		'django.contrib.auth.backends.ModelBackend',
 )
+
+REDIS_HOST = '127.0.0.1'
+REDIS_PORT = 6379
+REDIS_DB = 0

@@ -20,9 +20,11 @@ urlpatterns = patterns('',
 	
 	url(r'^$', 'khan.site.views.front_page', name='front_page'),
 	url(r'^init_pipe/$', 'khan.site.views.init_pipe', name='init_pipe'),
-	url(r'^online_users/json/$', 'khan.site.views.online_users_json', name='online_users_json'),
 	url(r'^channels/json/$', 'khan.channel.views.latest_active_json', name='channels_json'),
+	url(r'^channels/(?P<id>\d)/join/$', 'khan.channel.views.join', name='channels_join'),
+	url(r'^channels/(?P<id>\d)/leave/$', 'khan.channel.views.leave', name='channels_leave'),
 	url(r'^channels/(?P<id>\d)/json/$', 'khan.channel.views.detail_json', name='channels_detail_json'),
+	url(r'^channels/(?P<id>\d)/users/json/$', 'khan.channel.views.users_json', name='channels_users_json'),
 
 	
 		

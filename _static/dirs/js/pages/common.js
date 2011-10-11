@@ -1,5 +1,6 @@
 
 Chas = window.Chas || {};
+KMessage = window.KMessage || {};
 
 (function(){
 		
@@ -8,7 +9,8 @@ Chas = window.Chas || {};
 			{
 				session_key:sessionkey,
 				username:username,
-				email:email
+				email:email,
+				pk:primarykey
 			}
 	*/
 	var user_properties = {};
@@ -25,7 +27,7 @@ Chas = window.Chas || {};
 		user_properties = props;
 	};
 	
-	Chas.get_user_properties = function(props){
+	Chas.get_user_properties = function(){
 		return user_properties;
 	};
 		
@@ -46,6 +48,7 @@ Chas = window.Chas || {};
 		var COMMAND_ADD_PIPE = 'add pipe';
 		var CHANNEL_COMMAND = 'COMMAND';
 		var CHANNEL_CHAT = 'CHAT';
+		var PREFIX_CHANNEL = 'Channel.';
 		
 		var states = {
 			pipe_registered:false
@@ -93,44 +96,118 @@ Chas = window.Chas || {};
 				return states.pipe_registered?true:false;
 			},/* end is_piped*/
 			
-			/* select_channel */
-			select_channel: function(id,name,fn_receiver){
+			/* select_channel , create new channel listener */
+			select_channel: function(id,fn_receiver){
 				var instance = this;
+				var channel_key = PREFIX_CHANNEL+id;
 			
 				if (!instance.is_piped()){
 					return false;
 				}
 			
-				if(socket.listeners(id).length < 1){
-					socket.on(id, fn_receiver);
+				if(socket.listeners(channel_key).length < 1){
+					/* create channel listener */
+					socket.on(channel_key,fn_receiver);
+					
+					/* tell mates that this user is joining */
+					var message = KMessage();
+					message.set_type(KMessage.TYPE.JOIN);
+					message.set_channel_id(id);
+					socket.emit(CHANNEL_CHAT, message.get());
+					
 					return true;
 				}
 				return false;
 						
 			},/* end select_channel */
 			
+			/**
+				message structure
+				{
+					meta: {
+						type: $message_type [message,join,typing,leave]
+					},
+					channel:{
+						id: $channel_id
+					},
+					text: $string_text,
+					sender: $username,
+				}
+			*/
+			
 			/* send_message */
-			send_message: function(channel_id,message){
+			send_message: function(channel_id,text){
 				if (!this.is_piped()){
 					return false;
 				}
-				socket.emit(CHANNEL_CHAT,
-				{
-					channel:{
-						id:channel_id
-					},
-					message:message,
-					//sender:user_properties.session_key
-					sender:user_properties.username
-				});
+				
+				var message = KMessage();
+				message.set_type(KMessage.TYPE.MESSAGE);
+				message.set_channel_id(channel_id);
+				message.set_text(text);
+				
+				socket.emit(CHANNEL_CHAT, message.get());
 			},/* end send_message */
+			
 			
 		} /* end prototype */
 		
-	}() /* end Chas*/
+	}(); /* end Chas*/
+
+	
+	KMessage = function(){
+		if (!(this instanceof KMessage)){
+		 	return new KMessage();
+		}
+		this.init();
+	}
+	
+	KMessage.TYPE = {
+		MESSAGE: 'MESSAGE',
+		JOIN: 'JOIN',
+		TYPING: 'TYPING',
+		LEAVE: 'LEAVE'
+	}
+	
+	KMessage.prototype = function(){
+		var message = {};
+		
+		return {
+			
+			init: function(){
+				message = {
+					meta: {
+						type: null
+					},
+					channel:{
+						id: null
+					},
+					text: null,
+					sender: Chas.get_user_properties().username
+				}
+			},
+			
+			set_type: function(type){
+				message.meta.type = type;
+			},
+			
+			set_channel_id: function(id){
+				message.channel.id = id;
+			},
+			
+			set_text: function(text){
+				message.text = text;
+			},
+			
+			get: function(){
+				return message;
+			}
+			
+		}; /* end prototype */
+	}(); /* end Message */
 
 
-})();
+})(); /* end function */
 
 /* django utilities to pass csrf */
 $('html').ajaxSend(function(event, xhr, settings) {

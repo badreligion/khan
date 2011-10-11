@@ -15,6 +15,11 @@ var SERVER_PORT = 8001,
 		
 var COMMAND_ADD_PIPE = 'add pipe';
 
+var PREFIX_SESSION = 'Session.',
+		PREFIX_CHANNEL_JOIN = 'User.Join.',
+		PREFIX_CHANNEL_USERS = 'Channel.Users.'
+		PREFIX_CHANNEL = 'Channel.';
+
 /**
 	pipes structure
 		'socket session': django session key
@@ -42,70 +47,113 @@ io.set('transports', ['xhr-polling','jsonp-polling']);
 io.sockets.on('connection',function(socket){
 	
 	var sid = socket.id;
-	
 	util.log('SOCKET ID: '+sid);
 	
 	socket.json.on(CHANNEL_COMMAND, function(json,fn){
 		util.log('processing command '+json.command);
-		var result = {};
 		switch(json.command){
 			case COMMAND_ADD_PIPE:
 				util.log('django key: '+json.session_key);
 				
-				redis_client.hgetall(json.session_key,function(err,o){
+				var redis_session_key = get_session_key(json.session_key),
+				session_key = json.session_key;
+				
+				redis_client.hgetall(redis_session_key,function(err,o){
 					if (err){
-						util.log(err);
+						util.log(util.inspect(err));
 						fn(set_result(false,'fail',COMMAND_ADD_PIPE));
 						return;
 					}
-					util.log('get key '+json.session_key+' from redis');
-					util.log(o);
+					util.log('get key '+redis_session_key+' from redis');
+					util.log(util.inspect(o));
 					
-					socket.session_key = json.session_key;
+					socket.session_key = session_key;
 					util.log('socket.session_key: '+socket.session_key);
 					if(fn){
 						fn(set_result(true,'success',COMMAND_ADD_PIPE));
 					}
 				});
-				
 			break;
+			
 			default:
 				util.log('no command match');
-				result = set_result(false,'no_command_match',null);
 				if(fn){
-					fn(result);
+					fn(set_result(false,'no_command_match',null));
 				}
 		}
 	});
 	
 	/**
 		message structure
-			'message': message from client,
-			'channel': {
-				id: channel id
+		{
+			meta: {
+				type: $message_type [message,join,typing,leave]
 			},
-			'sender': django session from message sender
+			channel:{
+				id: $channel_id
+			},
+			text: $string_text,
+			sender: $username,
+		}
 	*/
 	socket.json.on(CHANNEL_CHAT, function(json,fn){
-		util.log('got message: '+json.message);
+		util.log('got message: '+json.text);
 		util.log('to channel: '+json.channel.id);
 		util.log('sender: '+json.sender);
-		socket.broadcast.emit(json.channel.id,json);
+		util.log('type: '+json.meta.type);
+		socket.broadcast.emit(get_channel_key(json.channel.id),json);
 		//TODO: run fn
 	});
 	
 	socket.on('disconnect',function(){
-		util.log('disconnecting '+sid+' and '+socket.session_key);
-		redis_client.del(socket.session_key,function(err,o){
-			if (err){
-				util.log('error deleting key from redis');
-				util.log(err);
-			}else{
-				util.log('success deleting key from redis');
-				util.log(o);
+		var session_key = get_session_key(socket.session_key),
+				channel_join_key = get_channel_join_key(socket.session_key);
+		
+		util.log('disconnecting socket id: '+socket.session_key);
+		util.log('deleting: '+session_key+', '+channel_join_key);
+		
+		/* get user id from redis, id = pk, use this to delete channel users*/
+		redis_client.hgetall(session_key,function(err,user){
+			if(err){
+				util.log('error on redis_client.hgetall');
+				util.log(util.inspect(err));
+				return false;
 			}
+			
+			/* inspects all channel the user's participated */
+			redis_client.smembers(channel_join_key, function(err,channels){
+				if(err){
+					util.log('error on redis_client.smembers');
+					util.log(util.inspect(err));
+					return false;
+				}
+
+				util.log('channels within '+PREFIX_CHANNEL_JOIN);
+				util.log(util.inspect(channels));
+
+				for(var index in channels){
+					util.log('iterate channel: '+channels[index]);
+					var channel_users_key = get_channel_users_key(channels[index]);
+					redis_client.srem(channel_users_key, user.pk, function(err, users){
+						util.log('remove user from channel');
+						if(err){
+							util.log('error redis_client.srem');
+						}
+						util.log(util.inspect(users));
+					});
+				}
+
+				/* delete user channels */
+				redis_client.del(channel_join_key,on_redis_delete);
+				delete channels;
+
+			});
+			
+			/* delete user session */
+			redis_client.del(session_key,on_redis_delete);
+			delete user;
 		});
-		//todo: delete key from redis
+		
 	});
 	
 });
@@ -119,3 +167,29 @@ var set_result = function(status, message, command){
 	}
 }
 
+var get_session_key = function(session_key){
+	return PREFIX_SESSION+session_key;
+}
+
+var get_channel_join_key = function(session_key){
+	return PREFIX_CHANNEL_JOIN+session_key;
+}
+
+var get_channel_key = function(anything){
+	return PREFIX_CHANNEL+anything;
+}
+
+var get_channel_users_key = function(channel_id){
+	return PREFIX_CHANNEL_USERS+channel_id;
+}
+
+
+var on_redis_delete = function(err,o){
+	if (err){
+		util.log('error deleting key from redis');
+		util.log(util.inspect(err));
+	}else{
+		util.log('success deleting key from redis');
+		util.log(util.inspect(o));
+	}	
+}

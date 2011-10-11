@@ -1,7 +1,7 @@
 $(document).ready(function(){
 	var $tabs = $( "#tabs").tabs({
 		tabTemplate: "<li><a href='#{href}'>#{label}</a> <span class='ui-icon ui-icon-close'>Remove Tab</span></li>",
-		add: function( event, ui ) {
+			add: function( event, ui ) {
 					if (ui.tab.text == 'Welcome'){
 						var tab_content = '<h3>Django + NodeJs Realtime Chat!</h3>'+
 						'<p>This application is intended for learning purpose, usage is at your own risk.</p>';
@@ -13,12 +13,26 @@ $(document).ready(function(){
 						'<input type="hidden" name="channel_id_'+ui.panel.id+'" value="'+channel_id+'" class="channel_hidden" />';
 						$( ui.panel ).append(tab_content);
 					}
-				}
+			},
+			select: function(event, ui){
+				var id = ui.panel.id.replace(/tabs-/g,'');
+				var id_channel_users_key = 'id_channel_users_'+id;
+				$('#id_channel_users_list .channels').hide();
+				$('#'+id_channel_users_key).show();
+			}
 	});
 
 	$( "#tabs span.ui-icon-close" ).live( "click", function() {
 		var index = $( "li", $tabs ).index( $( this ).parent() );
-		$tabs.tabs( "remove", index );
+		var id = $( "li a:eq("+index+") ", $tabs ).attr('href').replace(/#tabs-/,'');
+		var id_channel_users_key = 'id_channel_users_'+id;
+		$('#'+id_channel_users_key).remove();
+		$.post('channels/'+id+'/leave/',function(res){
+			$tabs.tabs( "remove", index );
+		}).error(function(xhr,status,err){
+				console.log('error channel leave');
+				console.log(xhr);
+			});
 	});
 
 	$tabs.tabs( "add", '#tabs-0', 'Welcome');
@@ -47,16 +61,8 @@ $(document).ready(function(){
 					});
 				}
 			});
-			
-			$.getJSON('online_users/json/',function(data){
-				if (data){
-					$.each(data,function(i,user){
-						var to_append = '<div><a href="'+user.username+'">'+user.username+'</a></div>';
-						$('#id_users_list').append(to_append);
-					});
-				}
-			});
-
+						
+			/* select channel */
 			$('#id_channels_list a').live('click',function(){
 				var id = $(this).attr('href');
 				var name = $(this).text();
@@ -66,24 +72,37 @@ $(document).ready(function(){
 				if (exists.length < 1){
 					/* if tab not exists then select channel */
 					var new_tab = $tabs.tabs( "add", tab_id, name );
-					chas.select_channel(id,name,on_message_received);
-				}
-				/* select tab */
+					chas.select_channel(id,on_message_received);
+					
+					/* register channel to redis */
+					$.post('channels/'+id+'/join/',function(res){
+						//TODO: ????
+					}).error(function(xhr,status,err){
+						console.log('error join channel');
+						console.log(xhr);
+					});
+					
+					/* give initial div height */
+					$(tab_id+' .message_container').attr('init-scroll-height',function(){
+						return this.scrollHeight;
+					});
+					
+					/* get users on this channel */
+					$.getJSON('channels/'+id+'/users/json/',function(data){
+						var id_channel_users_key = 'id_channel_users_'+id;
+						$('#id_channel_users_list .channels').hide();
+						if (data){
+							$('#id_channel_users_list').append('<div id="'+id_channel_users_key+'" class="channels"></div>');
+							$.each(data,function(i,user){
+								draw_users_channel(id,user.username);
+							});
+						}
+					});
+				}				
 				$tabs.tabs('select',tab_id);
-				
-				/* give initial div height */
-				$(tab_id+' .message_container').attr('init-scroll-height',function(){
-					return this.scrollHeight;
-				});
-				
 				return false;
 			});
-			
-			$('#id_users_list a').live('click',function(){
-				alert('yet implemented');
-				return false;
-			});
-			
+						
 			$('.message_text').live('keypress',function(e){
 				if(e.which != '13') return;
 				var channel_id = $(this).next('.channel_hidden').val();
@@ -101,7 +120,12 @@ $(document).ready(function(){
 var on_message_received = function(data){
 	console.log('got data');
 	console.log(data);
-	draw_message(data.channel.id, data.sender, data.message);
+	if(data.meta.type == KMessage.TYPE.MESSAGE){
+		draw_message(data.channel.id, data.sender, data.text);
+	}else if(data.meta.type == KMessage.TYPE.JOIN){
+		draw_users_channel(data.channel.id, data.sender);
+	}
+	
 }
 
 var draw_message = function(channel_id,sender,message){
@@ -128,6 +152,13 @@ var draw_message = function(channel_id,sender,message){
 	}else{
 		console.log('active');
 		message_container.scrollTop(scrollHeight);
+	}	
+}
+
+var draw_users_channel = function(channel_id, username){
+	if (username == Chas.get_user_properties().username){
+		return false;
 	}
-	
+	var to_append = '<div class="users"><a href="'+username+'">'+username+'</a></div>';
+	$('#id_channel_users_'+channel_id).append(to_append);
 }
